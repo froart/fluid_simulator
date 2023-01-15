@@ -2,6 +2,7 @@
 #include "opengl_setup.hpp"
 #include <math.h>
 #include <iostream>
+#include <omp.h>
 
 using namespace std;
 
@@ -56,32 +57,36 @@ void Fluid::diffuse(int b, float* x, float* x0, int iter) {
 }
 
 void Fluid::project(float* vx, float* vy, float* p, float* div, int iter) {
+	#pragma omp parallel for collapse(2)
 	for(int j = 1; j < height_ - 1; ++j)
 		for(int i = 1; i < width_ - 1; ++i) {
 			div[I(i, j)] = -0.5f * (vx[I(i+1, j)] - vx[I(i-1, j)] 
 														+ vy[I(i, j+1)] - vy[I(i, j-1)]) / width_;
 			p[I(i,j)] = 0;
 		}
+	#pragma omp barrier 
 	setBoundary(0, div);
 	setBoundary(0, p);	
 	
 	solveLinear(0, p, div, 1, 6, iter);
 
+	#pragma omp parallel for collapse(2)
 	for(int j = 1; j < height_ - 1; ++j)
 		for(int i = 1; i < width_ - 1; ++i) {
 			vx[I(i, j)] -= 0.5f * (p[I(i+1, j)] - p[I(i-1, j)]) * width_; 
 			vy[I(i, j)] -= 0.5f * (p[I(i, j+1)] - p[I(i, j-1)]) * height_; 
 		}
+	#pragma omp barrier
 	setBoundary(1, vx);
 	setBoundary(2, vy);
 }
 
 void Fluid::advect(int b, float* d, float* d0, float* vx, float* vy) {
-	float x, y;
+	#pragma omp parallel for collapse(2)
 	for(int j = 1; j < height_ - 1; ++j)
 		for(int i = 1; i < width_ - 1; ++i) {
-			x = ((float) i) - dt_ * (width_-2) * vx[I(i,j)];
-			y = ((float) j) - dt_ * (height_-2) * vy[I(i,j)];
+			float x = ((float) i) - dt_ * (width_-2) * vx[I(i,j)];
+			float y = ((float) j) - dt_ * (height_-2) * vy[I(i,j)];
 			if(x < 0.5f) x = 0.5f;
 			if(x > (((float) width_) + 0.5f)) x = ((float) width_) + 0.5f;
 			float i0 = floorf(x);
@@ -103,25 +108,38 @@ void Fluid::advect(int b, float* d, float* d0, float* vx, float* vy) {
 			d[I(i, j)] = s0 * (t0 * d0[I(i0i, j0i)] + t1 * d0[I(i0i, j1i)])
 							 	 + s1 * (t0 * d0[I(i1i, j0i)] + t1 * d0[I(i1i, j1i)]);
 		}
+	#pragma omp barrier
 	setBoundary(b, d);
 }
 
 void Fluid::setBoundary(int b, float* x) {
 		// mirror values at top and bottom borders
+		#pragma omp parallel for
 		for(int i = 1; i < width_-1; i++) {
 			x[I(i, 0			 )] = b == 2 ? -x[I(i,        1)] : x[I(i,        1)];
 			x[I(i, height_-1)] = b == 2 ? -x[I(i, height_-2)] : x[I(i, height_-2)];
 		}
+		#pragma omp barrier
 		// mirror values at left and right borders
+		#pragma omp parallel for
 		for(int j = 1; j < height_-1; j++) {
 			x[I(0, j			  )] = b == 1 ? -x[I(1,         j)] : x[I(1        , j)];
 			x[I(width_ - 1, j)] = b == 1 ? -x[I(width_ - 2, j)] : x[I(width_ - 2, j)];
 		}
+		#pragma omp barrier
 		// set values at the vortexes
-		x[I(0, 0)] = 0.33f * (x[I(1,0)] + x[I(0,1)]);
-		x[I(width_-1, 0)] = 0.33f * (x[I(width_-2,0)] + x[I(width_-1,1)]);
-		x[I(width_-1, height_-1)] = 0.33f * (x[I(width_-2,height_-1)] + x[I(width_-1,height_-2)]);
-		x[I(0, height_-1)] = 0.33f * (x[I(0,height_-2)] + x[I(1,height_-1)]);
+		#pragma omp parallel 
+		{
+			#pragma omp single
+			x[I(0, 0)] = 0.33f * (x[I(1,0)] + x[I(0,1)]);
+			#pragma omp single
+			x[I(width_-1, 0)] = 0.33f * (x[I(width_-2,0)] + x[I(width_-1,1)]);
+			#pragma omp single
+			x[I(width_-1, height_-1)] = 0.33f * (x[I(width_-2,height_-1)] + x[I(width_-1,height_-2)]);
+			#pragma omp single
+			x[I(0, height_-1)] = 0.33f * (x[I(0,height_-2)] + x[I(1,height_-1)]);
+		}
+		#pragma omp barrier
 }
 
 void Fluid::solveLinear(int b, float* x, float* x0, float a, float c, int iter) {
