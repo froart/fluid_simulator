@@ -1,6 +1,6 @@
 NCCX    = g++ 
 CFLAGS  = --std=c++11 -w
-LDFLAGS = -lm -lGL -lglut -lGLU -g
+LDFLAGS = -lm -lGL -lglut -lGLU -g -fopenmp
 #INCDIR  = ./inc
 #SRCDIR  = ./src
 #SOURCES = $(SRCDIR)/test.cpp $(SRCDIR)/frepshader.cpp $(SRCDIR)/helper.cpp
