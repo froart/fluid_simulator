@@ -6,6 +6,7 @@
 using namespace std;
 
 #define I(x,y) ((x)+(width_)*(y))
+#define SWAP_ARRAYS(a,b) {float* tmp=a;a=b;b=tmp;}
 
 Fluid::Fluid(float* image = NULL,
 						 int width = 100, 
@@ -36,18 +37,17 @@ void Fluid::addVelocity(int x, int y, float x_amount, float y_amount) {
 }
 
 void Fluid::evaluate(int iterations) {
-	diffuse(1, vx0_, vx_, iterations);
-	diffuse(2, vy0_, vy_, iterations);
+	SWAP_ARRAYS(vx0_, vx_); diffuse(1, vx_, vx0_, iterations);
+	SWAP_ARRAYS(vy0_, vy_); diffuse(2, vy_, vy0_, iterations);
+	project(vx_, vy_, vx0_, vy0_, iterations);
 
-	project(vx0_, vy0_, vx_, vy_, iterations);
-
+	SWAP_ARRAYS(vx0_, vx_); SWAP_ARRAYS(vy0_, vy_);
 	advect(1, vx_, vx0_, vx0_, vy0_);
 	advect(2, vy_, vy0_, vx0_, vy0_);
-
 	project(vx_, vy_, vx0_, vy0_, iterations);
 	
-	diffuse(0, s_, dens_, iterations);
-	advect(0, dens_, s_, vx_, vy_);
+	SWAP_ARRAYS(dens_, s_); diffuse(0, dens_, s_, iterations);
+  SWAP_ARRAYS(dens_, s_); advect(0, dens_, s_, vx_, vy_);
 }
 
 void Fluid::diffuse(int b, float* x, float* x0, int iter) {
