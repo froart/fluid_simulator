@@ -1,6 +1,6 @@
 #include "opengl_setup.hpp"
 
-void windowInit(char* name) {
+void runSimulation(char* name) {
 	int argc = 1;
   char* argv[1] = {(char*) "OpenGL"};
   glutInit(&argc, argv);
@@ -14,11 +14,6 @@ void windowInit(char* name) {
 	glutMouseFunc(mouse);
 	glutMainLoop();	
   return;
-}
-
-void keyboard(unsigned char c, int x, int y) {
-  if(c == 27)
-    exit(0);
 }
 
 void render(void) {
