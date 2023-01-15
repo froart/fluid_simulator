@@ -51,7 +51,7 @@ void Fluid::evaluate(int iterations) {
 }
 
 void Fluid::diffuse(int b, float* x, float* x0, int iter) {
-	float a = dt_ * diffusion_rate_ * (width_-2) * (height_-2);
+	float a = dt_ * diffusion_rate_ * (width_) * (height_);
 	solveLinear(b, x, x0, a, 1+4*a, iter);
 }
 
@@ -64,6 +64,7 @@ void Fluid::project(float* vx, float* vy, float* p, float* div, int iter) {
 		}
 	setBoundary(0, div);
 	setBoundary(0, p);	
+	
 	solveLinear(0, p, div, 1, 6, iter);
 
 	for(int j = 1; j < height_ - 1; ++j)
