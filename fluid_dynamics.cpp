@@ -52,7 +52,7 @@ void Fluid::evaluate(int iterations) {
 }
 
 void Fluid::diffuse(int b, float* x, float* x0, int iter) {
-	float a = dt_ * diffusion_rate_ * (width_) * (height_);
+	float a = dt_ * diffusion_rate_ * width_ * height_;
 	solveLinear(b, x, x0, a, 1+4*a, iter);
 }
 
@@ -147,8 +147,8 @@ void Fluid::solveLinear(int b, float* x, float* x0, float a, float c, int iter) 
 	for(int k = 0; k < iter; k++) {
 		for(int j = 1; j < height_-1; j++) {
 			for(int i = 1; i < width_-1; i++) {
-				x[I(i, j)] = (x0[I(i, j)] + a * (x[I(i+1, j)] + x[I(i-1, j)]
-																			 + x[I(i, j+1)] + x[I(i, j-1)])) * cRecip;
+				x[I(i, j)] = (x0[I(i, j)] + a * (x0[I(i+1, j)] + x0[I(i-1, j)]
+																			 + x0[I(i, j+1)] + x0[I(i, j-1)])) * cRecip;
 			}
 		}
 		setBoundary(b, x);
