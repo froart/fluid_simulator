@@ -31,13 +31,13 @@ Fluid::Fluid(float* image = NULL,
 };
 
 void Fluid::addSource(int x, int y, float amount) {
-	dens_[I(x,y)] += amount;
-	dens_[I(x,y)] = dens_[I(x,y)] > 1.0 ? 1.0 : dens_[I(x,y)];
+	dens_[I(x,y)] = amount;
+//	dens_[I(x,y)] = dens_[I(x,y)] > 1.0 ? 1.0 : dens_[I(x,y)];
 }
 
 void Fluid::addVelocity(int x, int y, float x_amount, float y_amount) {
-	vx_[I(x,y)] += x_amount;
-	vy_[I(x,y)] += y_amount;
+	vx_[I(x,y)] = x_amount;
+	vy_[I(x,y)] = y_amount;
 }
 
 void Fluid::evaluate() {
@@ -55,7 +55,7 @@ void Fluid::evaluate() {
 }
 
 void Fluid::diffuse(int b, float* x0, float* x) {
-	float a = dt_ * diffusion_rate_ * width_ * height_;
+	float a = 0;//dt_ * diffusion_rate_; //* width_ * height_;
 //	solveLinear(b, x0, x, a, 1+4*a, iter);
 	for(int k = 0; k < iterations_; k++) {
 		for(int j = 1; j < height_-1; j++) {
